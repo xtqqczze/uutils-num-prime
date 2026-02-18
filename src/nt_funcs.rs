@@ -23,6 +23,7 @@ use crate::tables::{SMALL_PRIMES_INV, ZETA_LOG_TABLE};
 use crate::traits::{FactorizationConfig, Primality, PrimalityTestConfig, PrimalityUtils};
 use crate::{BitTest, ExactRoots};
 use num_integer::Roots;
+#[cfg(feature = "big-table")]
 use num_modular::DivExact;
 use num_modular::{ModularCoreOps, ModularInteger, MontgomeryInt};
 use num_traits::{CheckedAdd, FromPrimitive, Num, RefNum, ToPrimitive};
@@ -843,7 +844,8 @@ where
                     T::from_u8(SMALL_PRIMES[pos + 1])
                 }
             }
-            Err(pos) => T::from_u8(SMALL_PRIMES[pos]),
+            Err(pos) if pos < SMALL_PRIMES.len() => T::from_u8(SMALL_PRIMES[pos]),
+            Err(_) => T::from_u64(SMALL_PRIMES_NEXT),
         };
     }
 
