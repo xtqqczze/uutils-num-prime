@@ -8,8 +8,8 @@
 
 [![CodeCov](https://codecov.io/gh/uutils/num-prime/branch/main/graph/badge.svg)](https://codecov.io/gh/uutils/num-prime)
 
-
 This crate provides utilities for prime number related functionalities:
+
 - Primality testing
   - Deterministic primality check of `u64` integers (using a very fast hashing algorithm)
   - Fermat probable prime test
