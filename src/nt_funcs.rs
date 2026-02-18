@@ -844,7 +844,8 @@ where
                     T::from_u8(SMALL_PRIMES[pos + 1])
                 }
             }
-            Err(pos) => T::from_u8(SMALL_PRIMES[pos]),
+            Err(pos) if pos < SMALL_PRIMES.len() => T::from_u8(SMALL_PRIMES[pos]),
+            Err(_) => T::from_u64(SMALL_PRIMES_NEXT),
         };
     }
 
