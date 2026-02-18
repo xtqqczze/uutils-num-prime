@@ -647,9 +647,9 @@ where
 ///
 /// # Reference:
 /// - \[1] Dusart, Pierre. "Estimates of Some Functions Over Primes without R.H."
-/// [arxiv:1002.0442](http://arxiv.org/abs/1002.0442). 2010.
+///   [arxiv:1002.0442](http://arxiv.org/abs/1002.0442). 2010.
 /// - \[2] Dusart, Pierre. "Explicit estimates of some functions over primes."
-/// The Ramanujan Journal 45.1 (2018): 227-251.
+///   The Ramanujan Journal 45.1 (2018): 227-251.
 pub fn prime_pi_bounds<T: ToPrimitive + FromPrimitive>(target: &T) -> (T, T) {
     if let Some(x) = target.to_u64() {
         // use existing primes and return exact value
@@ -719,15 +719,15 @@ pub fn prime_pi_bounds<T: ToPrimitive + FromPrimitive>(target: &T) -> (T, T) {
 ///
 /// # Reference:
 /// - \[1] Dusart, Pierre. "Estimates of Some Functions Over Primes without R.H."
-/// arXiv preprint [arXiv:1002.0442](https://arxiv.org/abs/1002.0442) (2010).
+///   arXiv preprint [arXiv:1002.0442](https://arxiv.org/abs/1002.0442) (2010).
 /// - \[2] Rosser, J. Barkley, and Lowell Schoenfeld. "Approximate formulas for some
-/// functions of prime numbers." Illinois Journal of Mathematics 6.1 (1962): 64-94.
+///   functions of prime numbers." Illinois Journal of Mathematics 6.1 (1962): 64-94.
 /// - \[3] Dusart, Pierre. "The k th prime is greater than k (ln k+ ln ln k-1) for k≥ 2."
-/// Mathematics of computation (1999): 411-415.
+///   Mathematics of computation (1999): 411-415.
 /// - \[4] Axler, Christian. ["New Estimates for the nth Prime Number."](https://www.emis.de/journals/JIS/VOL22/Axler/axler17.pdf)
-/// Journal of Integer Sequences 22.2 (2019): 3.
+///   Journal of Integer Sequences 22.2 (2019): 3.
 /// - \[5] Axler, Christian. [Uber die Primzahl-Zählfunktion, die n-te Primzahl und verallgemeinerte Ramanujan-Primzahlen. Diss.](http://docserv.uniduesseldorf.de/servlets/DerivateServlet/Derivate-28284/pdfa-1b.pdf)
-/// `PhD` thesis, Düsseldorf, 2013.
+///   `PhD` thesis, Düsseldorf, 2013.
 ///
 /// Note that some of the results might depend on the Riemann Hypothesis. If you find
 /// any prime that doesn't fall in the bound, then it might be a big discovery!
@@ -1186,7 +1186,6 @@ mod tests {
             1523, 1619, 1823, 1907,
         ];
         for p in SMALL_PRIMES {
-            let p = p;
             if p > 1500 {
                 break;
             }
@@ -1203,8 +1202,8 @@ mod tests {
         let mu20: [i8; 20] = [
             1, -1, -1, 0, -1, 1, -1, 0, 0, 1, -1, 0, -1, 1, 1, 0, -1, 0, -1, 0,
         ];
-        for i in 0..20 {
-            assert_eq!(moebius(&(i + 1)), mu20[i], "moebius on {i}");
+        for (i, &expected) in mu20.iter().enumerate() {
+            assert_eq!(moebius(&(i + 1)), expected, "moebius on {i}");
         }
 
         // some square numbers
@@ -1216,15 +1215,15 @@ mod tests {
             30, 42, 66, 70, 78, 102, 105, 110, 114, 130, 138, 154, 165, 170, 174, 182, 186, 190,
             195, 222,
         ]; // OEIS:A007304
-        for i in 0..20 {
-            assert_eq!(moebius(&sphenic3[i]), -1i8, "moebius on {}", sphenic3[i]);
+        for &val in &sphenic3 {
+            assert_eq!(moebius(&val), -1i8, "moebius on {val}");
         }
         let sphenic5: [u16; 23] = [
             2310, 2730, 3570, 3990, 4290, 4830, 5610, 6006, 6090, 6270, 6510, 6630, 7410, 7590,
             7770, 7854, 8610, 8778, 8970, 9030, 9282, 9570, 9690,
         ]; // OEIS:A046387
-        for i in 0..20 {
-            assert_eq!(moebius(&sphenic5[i]), -1i8, "moebius on {}", sphenic5[i]);
+        for &val in sphenic5.iter().take(20) {
+            assert_eq!(moebius(&val), -1i8, "moebius on {val}");
         }
     }
 

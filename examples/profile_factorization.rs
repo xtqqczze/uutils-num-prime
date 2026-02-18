@@ -6,48 +6,6 @@ use num_prime::factor::{one_line, pollard_rho, squfof, SQUFOF_MULTIPLIERS};
 use num_prime::RandPrime;
 use rand::random;
 
-/// Collect the the iteration number of each factorization algorithm with different settings
-fn profile_n(n: u128) -> Vec<(String, usize)> {
-    let k_squfof: Vec<u16> = SQUFOF_MULTIPLIERS.iter().take(10).copied().collect();
-    let k_oneline: Vec<u16> = vec![1, 360, 480];
-    const MAXITER: usize = 1 << 20;
-    const POLLARD_REPEATS: usize = 2;
-
-    let mut n_stats = Vec::new();
-
-    // pollard rho
-    for i in 0..POLLARD_REPEATS {
-        n_stats.push((
-            format!("pollard_rho{}", i + 1),
-            pollard_rho(&n, random(), random(), MAXITER).1,
-        ));
-    }
-
-    // squfof
-    for &k in &k_squfof {
-        let key = format!("squfof_k{k}");
-        if let Some(kn) = n.checked_mul(u128::from(k)) {
-            let n = squfof(&n, kn, MAXITER).1;
-            n_stats.push((key, n));
-        } else {
-            n_stats.push((key, MAXITER));
-        };
-    }
-
-    // one line
-    for &k in &k_oneline {
-        let key = format!("one_line_k{k}");
-        if let Some(kn) = n.checked_mul(u128::from(k)) {
-            let n = one_line(&n, kn, MAXITER).1;
-            n_stats.push((key, n));
-        } else {
-            n_stats.push((key, MAXITER));
-        };
-    }
-
-    n_stats
-}
-
 /// Collect the best case of each factorization algorithm
 fn profile_n_min(n: u128) -> Vec<(String, usize)> {
     let k_squfof: Vec<u16> = SQUFOF_MULTIPLIERS.to_vec();
@@ -120,27 +78,26 @@ fn main() -> Result<(), Error> {
             let n = p1 * p2;
             n_list.push((n, (n as f64).log2() as f32));
             println!("Semiprime ({total_bits}bits): {n} = {p1} * {p2}");
-            // stats.push(profile_n(n));
             stats.push(profile_n_min(n));
         }
     }
 
     // Log into the CSV file
     let mut fout = File::create("profile_stats.csv")?;
-    fout.write(b"n,n_bits")?;
+    fout.write_all(b"n,n_bits")?;
     for k in stats[0].iter().map(|(k, _)| k) {
-        fout.write(b",")?;
-        fout.write(k.as_bytes())?;
+        fout.write_all(b",")?;
+        fout.write_all(k.as_bytes())?;
     }
 
     for ((n, bits), n_stats) in n_list.iter().zip(stats) {
-        fout.write(b"\n")?;
-        fout.write(n.to_string().as_bytes())?;
-        fout.write(b",")?;
-        fout.write(bits.to_string().as_bytes())?;
+        fout.write_all(b"\n")?;
+        fout.write_all(n.to_string().as_bytes())?;
+        fout.write_all(b",")?;
+        fout.write_all(bits.to_string().as_bytes())?;
         for (_, v) in n_stats {
-            fout.write(b",")?;
-            fout.write(v.to_string().as_bytes())?;
+            fout.write_all(b",")?;
+            fout.write_all(v.to_string().as_bytes())?;
         }
     }
 

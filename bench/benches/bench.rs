@@ -189,7 +189,7 @@ pub fn bench_factorization(c: &mut Criterion) {
     group.bench_function("num-prime (this crate)", |b| {
         b.iter(|| {
             numbers()
-                .filter(|&n| nt_funcs::factorize64(n as u64).len() > 1)
+                .filter(|&n| nt_funcs::factorize64(n).len() > 1)
                 .count()
         })
     });
@@ -213,9 +213,7 @@ pub fn bench_prime_gen(c: &mut Criterion) {
         b.iter(|| -> num_bigint::BigUint { rng.gen_prime(256, None) })
     });
     group.bench_function("num-primes", |b| b.iter(|| Generator::new_prime(256)));
-    group.bench_function("glass_pumpkin", |b| {
-        b.iter(|| gprime::from_rng(256, &mut rng))
-    });
+    group.bench_function("glass_pumpkin", |b| b.iter(|| gprime::new(256)));
     group.finish();
 
     let mut group = c.benchmark_group("safe prime generation (256 bits)");
@@ -226,9 +224,7 @@ pub fn bench_prime_gen(c: &mut Criterion) {
         b.iter(|| -> num_bigint::BigUint { rng.gen_safe_prime(256) })
     });
     group.bench_function("num-primes", |b| b.iter(|| Generator::safe_prime(256)));
-    group.bench_function("glass_pumpkin", |b| {
-        b.iter(|| safe_gprime::from_rng(256, &mut rng))
-    });
+    group.bench_function("glass_pumpkin", |b| b.iter(|| safe_gprime::new(256)));
     group.finish();
 }
 

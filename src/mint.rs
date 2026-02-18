@@ -94,15 +94,7 @@ impl<T: Integer + Clone, R: Reducer<T>> Eq for Mint<T, R> {}
 
 impl<T: Integer + Clone, R: Reducer<T> + Clone> PartialOrd for Mint<T, R> {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        match (&self.0, &other.0) {
-            (Left(v1), Left(v2)) => v1.partial_cmp(v2),
-            (Left(v1), Right(v2)) => v1.partial_cmp(&v2.residue()),
-            (Right(v1), Left(v2)) => v1.residue().partial_cmp(v2),
-            (Right(v1), Right(v2)) => {
-                debug_assert!(v1.modulus() == v2.modulus());
-                v1.residue().partial_cmp(&v2.residue())
-            }
-        }
+        Some(self.cmp(other))
     }
 }
 impl<T: Integer + Clone, R: Reducer<T> + Clone> Ord for Mint<T, R> {
@@ -348,7 +340,6 @@ impl<T: Integer + Clone, R: Reducer<T> + Clone> Integer for Mint<T, R> {
     forward_binops_left_ref_only!(div_floor);
     forward_binops_left_ref_only!(mod_floor);
     forward_binops_left_ref_only!(lcm);
-    forward_binops_left_ref_only!(divides => bool);
     forward_binops_left_ref_only!(is_multiple_of => bool);
     forward_uops_ref!(is_even => bool);
     forward_uops_ref!(is_odd => bool);

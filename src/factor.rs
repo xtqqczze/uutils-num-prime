@@ -321,9 +321,6 @@ where
 //      https://github.com/zademn/facto-rs/
 //      https://github.com/elmomoilanen/prime-factorization
 //      https://cseweb.ucsd.edu/~ethome/teaching/2022-cse-291-14/
-fn pollard_pp1() {}
-fn williams_pp1() {}
-
 #[cfg(test)]
 mod tests {
     use super::*;

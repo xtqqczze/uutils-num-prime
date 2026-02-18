@@ -458,14 +458,14 @@ mod tests {
             2_600_190_307_441,
         ];
         let m = random::<u16>();
-        for n in 2..p3qm1.len() {
+        for (n, &p3qm1_val) in p3qm1.iter().enumerate().skip(2) {
             let (uk, _) = LucasUtils::lucasm(3, -1, u64::from(m), n as u64);
-            assert_eq!(uk, p3qm1[n] % u64::from(m));
+            assert_eq!(uk, p3qm1_val % u64::from(m));
 
             #[cfg(feature = "num-bigint")]
             {
                 let (uk, _) = LucasUtils::lucasm(3, -1, BigUint::from(m), BigUint::from(n));
-                assert_eq!(uk, BigUint::from(p3qm1[n] % (m as u64)));
+                assert_eq!(uk, BigUint::from(p3qm1_val % u64::from(m)));
             }
         }
 

@@ -59,7 +59,7 @@
 //! # Optional Features
 //! - `big-int` (default): Enable this feature to support `num-bigint::BigUint` as integer inputs.
 //! - `big-table` (default): Enable this feature to allow compiling large precomputed tables which
-//!     could improve the speed of various functions with the cost of larger memory footprint.
+//!   could improve the speed of various functions with the cost of larger memory footprint.
 //!
 
 pub mod buffer;
