@@ -8,11 +8,16 @@ jobs:
     strategy:
       matrix:
         rust:
+          - 1.87.0
           - stable
+          - nightly
         os: [ubuntu-latest, windows-latest, macos-latest]
 
     steps:
       - uses: actions/checkout@v6
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ matrix.rust }}
       - run: cargo test
       - run: cargo test --all-features
       - run: cargo test --features big-table
@@ -25,11 +30,17 @@ jobs:
     strategy:
       matrix:
         rust:
+          - 1.87.0
           - stable
+          - nightly
         os: [ubuntu-latest, windows-latest, macos-latest]
 
     steps:
       - uses: actions/checkout@v6
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ matrix.rust }}
+          components: clippy
       - run: cargo clippy -- -D warnings
 
   rustfmt:
