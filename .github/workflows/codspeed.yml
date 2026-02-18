@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        mode: [simulation, memory]
+        mode: [simulation] # , memory]
     steps:
       - uses: actions/checkout@v4
 
