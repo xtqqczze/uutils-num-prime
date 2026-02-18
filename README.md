@@ -1,5 +1,10 @@
 # num-prime
 
+[![Crates.io](https://img.shields.io/crates/v/num-prime.svg)](https://crates.io/crates/num-prime)
+[![Discord](https://img.shields.io/badge/discord-join-7289DA.svg?logo=discord&longCache=true&style=flat)](https://discord.gg/wQVJbvJ)
+[![License](http://img.shields.io/badge/license-Apache%202-blue.svg)](https://github.com/uutils/num-prime/blob/main/LICENSE)
+[![dependency status](https://deps.rs/repo/github/uutils/num-prime/status.svg)](https://deps.rs/repo/github/uutils/num-prime)
+
 This crate provides utilities for prime number related functionalities:
 - Primality testing
   - Deterministic primality check of `u64` integers (using a very fast hashing algorithm)
