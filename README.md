@@ -6,6 +6,9 @@
 [![License](http://img.shields.io/badge/license-Apache%202-blue.svg)](https://github.com/uutils/num-prime/blob/main/LICENSE)
 [![dependency status](https://deps.rs/repo/github/uutils/num-prime/status.svg)](https://deps.rs/repo/github/uutils/num-prime)
 
+[![CodeCov](https://codecov.io/gh/uutils/num-prime/branch/main/graph/badge.svg)](https://codecov.io/gh/uutils/num-prime)
+
+
 This crate provides utilities for prime number related functionalities:
 - Primality testing
   - Deterministic primality check of `u64` integers (using a very fast hashing algorithm)
