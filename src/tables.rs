@@ -1158,7 +1158,7 @@ pub const MILLER_RABIN_BASE32: [u16; 256] = [
 ];
 
 #[cfg(feature = "big-table")]
-pub const MILLER_RABIN_BASE64: [u32; 16384] = [
+pub static MILLER_RABIN_BASE64: [u32; 16384] = [
     0x0024_b047,
     0x002e_32a1,
     0x0038_b06b,

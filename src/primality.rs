@@ -87,7 +87,7 @@ where
         let mut neg = false;
         loop {
             // check if n is a square number after several trials
-            if &d == &T::from_u8(13).unwrap() && (*n).is_square() {
+            if d == T::from_u8(13).unwrap() && (*n).is_square() {
                 break (0, 0);
             }
 

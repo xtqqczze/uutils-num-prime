@@ -239,8 +239,8 @@ impl<T: Integer + Clone, R: Reducer<T>> Div<Mint<T, R>> for &Mint<T, R> {
         }
     }
 }
-impl<'a, 'b, T: Integer + Clone + for<'r> Div<&'r T, Output = T>, R: Reducer<T>> Div<&'b Mint<T, R>>
-    for &'a Mint<T, R>
+impl<T: Integer + Clone + for<'r> Div<&'r T, Output = T>, R: Reducer<T>> Div<&Mint<T, R>>
+    for &Mint<T, R>
 {
     type Output = Mint<T, R>;
     #[inline]
@@ -297,7 +297,7 @@ impl<T: Integer + Clone, R: Reducer<T> + Clone> Rem<Mint<T, R>> for &Mint<T, R> 
         }
     }
 }
-impl<'a, 'b, T: Integer + Clone, R: Reducer<T> + Clone> Rem<&'b Mint<T, R>> for &'a Mint<T, R> {
+impl<T: Integer + Clone, R: Reducer<T> + Clone> Rem<&Mint<T, R>> for &Mint<T, R> {
     type Output = Mint<T, R>;
 
     #[inline]
@@ -518,8 +518,8 @@ impl<T: Integer + Clone, R: Reducer<T> + Clone> ModularCoreOps<&Self, &Self> for
         }
     }
 }
-impl<'a, 'b, T: Integer + Clone, R: Reducer<T> + Clone>
-    ModularCoreOps<&'b Mint<T, R>, &'b Mint<T, R>> for &'a Mint<T, R>
+impl<'b, T: Integer + Clone, R: Reducer<T> + Clone> ModularCoreOps<&'b Mint<T, R>, &'b Mint<T, R>>
+    for &Mint<T, R>
 {
     type Output = Mint<T, R>;
     #[inline]
@@ -593,9 +593,7 @@ impl<T: Integer + Clone, R: Reducer<T> + Clone> ModularUnaryOps<&Self> for Mint<
         }))
     }
 }
-impl<'a, 'b, T: Integer + Clone, R: Reducer<T> + Clone> ModularUnaryOps<&'b Mint<T, R>>
-    for &'a Mint<T, R>
-{
+impl<T: Integer + Clone, R: Reducer<T> + Clone> ModularUnaryOps<&Mint<T, R>> for &Mint<T, R> {
     type Output = Mint<T, R>;
     #[inline]
     fn negm(self, m: &Mint<T, R>) -> Self::Output {

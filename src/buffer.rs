@@ -211,10 +211,10 @@ pub trait PrimeBufferExt: for<'a> PrimeBuffer<'a> {
             };
 
             for p in self.iter().map(|p| T::from_u64(*p).unwrap()) {
-                if &p > &tsqrt {
+                if p > tsqrt {
                     return None; // the number is a prime
                 }
-                if &p > &limit {
+                if p > limit {
                     break;
                 }
                 if target.is_multiple_of(&p) {
@@ -350,13 +350,13 @@ impl NaiveBuffer {
     //       for endless prime iter. This can be a method in this trait, or standalone function,
     //       or implement as IntoIter. We can try to implement PrimeBuffer on primal first and see
     //       if it's reasonable to unifiy
-    pub fn primes(&mut self, limit: u64) -> std::iter::Take<<Self as PrimeBuffer>::PrimeIter> {
+    pub fn primes(&mut self, limit: u64) -> std::iter::Take<<Self as PrimeBuffer<'_>>::PrimeIter> {
         self.reserve(limit);
         let position = match self.list.binary_search(&limit) {
             Ok(p) => p + 1,
             Err(p) => p,
         }; // into_ok_or_err()
-        return self.list.iter().take(position);
+        self.list.iter().take(position)
     }
 
     /// Returns all primes ≤ `limit` and takes ownership. The primes are sorted.
@@ -372,7 +372,10 @@ impl NaiveBuffer {
     }
 
     /// Returns primes of certain amount counting from 2. The primes are sorted.
-    pub fn nprimes(&mut self, count: usize) -> std::iter::Take<<Self as PrimeBuffer>::PrimeIter> {
+    pub fn nprimes(
+        &mut self,
+        count: usize,
+    ) -> std::iter::Take<<Self as PrimeBuffer<'_>>::PrimeIter> {
         let (_, bound) = nth_prime_bounds(&(count as u64))
             .expect("Estimated size of the largest prime will be larger than u64 limit");
         self.reserve(bound);
@@ -403,7 +406,7 @@ impl NaiveBuffer {
         // Directly sieve if the limit is small
         const THRESHOLD_NTH_PRIME_SIEVE: u64 = 4096;
         if n <= THRESHOLD_NTH_PRIME_SIEVE {
-            return *self.nprimes(n as usize).last().unwrap();
+            return *self.nprimes(n as usize).next_back().unwrap();
         }
 
         // Check primes starting from estimation
@@ -424,7 +427,7 @@ impl NaiveBuffer {
     /// Legendre's phi function, used as a helper function for [`Self::prime_pi`]
     pub fn prime_phi(&mut self, x: u64, a: usize, cache: &mut LruCache<(u64, usize), u64>) -> u64 {
         if a == 1 {
-            return (x + 1) / 2;
+            return x.div_ceil(2);
         }
         if let Some(v) = cache.get(&(x, a)) {
             return *v;
@@ -510,9 +513,9 @@ mod tests {
         pb.clear();
         assert_eq!(pb.primes(293).copied().collect::<Vec<_>>(), PRIME300);
         pb = NaiveBuffer::new();
-        assert_eq!(*pb.primes(257).last().unwrap(), 257); // boundary of small table
+        assert_eq!(*pb.primes(257).next_back().unwrap(), 257); // boundary of small table
         pb = NaiveBuffer::new();
-        assert_eq!(*pb.primes(8167).last().unwrap(), 8167); // boundary of large table
+        assert_eq!(*pb.primes(8167).next_back().unwrap(), 8167); // boundary of large table
     }
 
     #[test]

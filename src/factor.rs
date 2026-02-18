@@ -42,10 +42,10 @@ where
     let mut result = BTreeMap::new();
     let mut factored = false;
     for (p, pt) in primes.map(|p| (p, T::from_u64(p).unwrap())) {
-        if &pt > &tsqrt {
+        if pt > tsqrt {
             factored = true;
         }
-        if &pt > &limit {
+        if pt > limit {
             break;
         }
 

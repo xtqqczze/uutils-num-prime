@@ -36,11 +36,11 @@ impl BitTest for BigUint {
         self.bit(position as u64)
     }
     fn bits(&self) -> usize {
-        BigUint::bits(&self) as usize
+        BigUint::bits(self) as usize
     }
     #[inline]
     fn trailing_zeros(&self) -> usize {
-        match BigUint::trailing_zeros(&self) {
+        match BigUint::trailing_zeros(self) {
             Some(a) => a as usize,
             None => 0,
         }
@@ -116,7 +116,7 @@ impl ExactRoots for BigUint {
 
         // check mod 2
         let shift = self.trailing_zeros().unwrap();
-        if shift % 3 != 0 {
+        if !shift.is_multiple_of(3) {
             return None;
         }
 
