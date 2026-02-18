@@ -207,7 +207,7 @@ pub fn factorize64(target: u64) -> BTreeMap<u64, usize> {
         }
 
         let mut exp: usize = 0;
-        while let Some(q) = residual.div_exact(p, &pinv) {
+        while let Some(q) = DivExact::div_exact(residual, p, &pinv) {
             exp += 1;
             residual = q;
         }
@@ -361,7 +361,7 @@ pub fn factorize128(target: u128) -> BTreeMap<u128, usize> {
         .skip(1)
     {
         let mut exp: usize = 0;
-        while let Some(q) = residual.div_exact(p, &pinv) {
+        while let Some(q) = DivExact::div_exact(residual, p, &pinv) {
             exp += 1;
             residual = q;
         }
