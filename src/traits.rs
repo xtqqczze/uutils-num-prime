@@ -291,3 +291,165 @@ pub trait RandPrime<T> {
     /// if the `bit_size` is 0 or it's larger than the bit width of the integer
     fn gen_safe_prime_exact(&mut self, bit_size: usize) -> T;
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // --- Primality::probably() ---
+    #[test]
+    fn primality_probably() {
+        assert!(Primality::Yes.probably());
+        assert!(!Primality::No.probably());
+        assert!(Primality::Probable(0.9).probably());
+    }
+
+    // --- Primality BitAnd: all 9 combinations ---
+    #[test]
+    fn primality_bitand_no_lhs() {
+        assert_eq!(Primality::No & Primality::No, Primality::No);
+        assert_eq!(Primality::No & Primality::Yes, Primality::No);
+        assert_eq!(Primality::No & Primality::Probable(0.9), Primality::No);
+    }
+
+    #[test]
+    fn primality_bitand_yes_lhs() {
+        assert_eq!(Primality::Yes & Primality::No, Primality::No);
+        assert_eq!(Primality::Yes & Primality::Yes, Primality::Yes);
+        assert_eq!(
+            Primality::Yes & Primality::Probable(0.8),
+            Primality::Probable(0.8)
+        );
+    }
+
+    #[test]
+    fn primality_bitand_probable_lhs() {
+        assert_eq!(Primality::Probable(0.9) & Primality::No, Primality::No);
+        assert_eq!(
+            Primality::Probable(0.9) & Primality::Yes,
+            Primality::Probable(0.9)
+        );
+        // Probable & Probable => combined probability
+        let result = Primality::Probable(0.8) & Primality::Probable(0.9);
+        match result {
+            Primality::Probable(p) => assert!((p - 0.72).abs() < 1e-6),
+            _ => panic!("expected Probable"),
+        }
+    }
+
+    // --- Primality BitOr: all 9 combinations ---
+    #[test]
+    fn primality_bitor_no_lhs() {
+        assert_eq!(Primality::No | Primality::No, Primality::No);
+        assert_eq!(Primality::No | Primality::Yes, Primality::Yes);
+        assert_eq!(
+            Primality::No | Primality::Probable(0.8),
+            Primality::Probable(0.8)
+        );
+    }
+
+    #[test]
+    fn primality_bitor_yes_lhs() {
+        assert_eq!(Primality::Yes | Primality::No, Primality::Yes);
+        assert_eq!(Primality::Yes | Primality::Yes, Primality::Yes);
+        assert_eq!(Primality::Yes | Primality::Probable(0.8), Primality::Yes);
+    }
+
+    #[test]
+    fn primality_bitor_probable_lhs() {
+        assert_eq!(
+            Primality::Probable(0.9) | Primality::No,
+            Primality::Probable(0.9)
+        );
+        assert_eq!(Primality::Probable(0.9) | Primality::Yes, Primality::Yes);
+        // Probable | Probable => 1 - (1-p1)*(1-p2)
+        let result = Primality::Probable(0.8) | Primality::Probable(0.9);
+        match result {
+            Primality::Probable(p) => assert!((p - 0.98).abs() < 1e-6),
+            _ => panic!("expected Probable"),
+        }
+    }
+
+    // --- PrimalityTestConfig constructors ---
+    #[test]
+    fn primality_test_config_default() {
+        let c = PrimalityTestConfig::default();
+        assert_eq!(c.sprp_trials, 2);
+        assert_eq!(c.sprp_random_trials, 3);
+        assert!(!c.slprp_test);
+        assert!(!c.eslprp_test);
+    }
+
+    #[test]
+    fn primality_test_config_bpsw() {
+        let c = PrimalityTestConfig::bpsw();
+        assert_eq!(c.sprp_trials, 1);
+        assert_eq!(c.sprp_random_trials, 0);
+        assert!(c.slprp_test);
+        assert!(!c.eslprp_test);
+    }
+
+    #[test]
+    fn primality_test_config_strict() {
+        let c = PrimalityTestConfig::strict();
+        assert_eq!(c.sprp_trials, 1);
+        assert_eq!(c.sprp_random_trials, 1);
+        assert!(c.slprp_test);
+        assert!(!c.eslprp_test);
+    }
+
+    // --- FactorizationConfig constructors ---
+    #[test]
+    fn factorization_config_default() {
+        let c = FactorizationConfig::default();
+        assert_eq!(c.td_limit, Some(1 << 14));
+        assert_eq!(c.rho_trials, 4);
+    }
+
+    #[test]
+    fn factorization_config_strict() {
+        let c = FactorizationConfig::strict();
+        assert_eq!(c.td_limit, Some(1 << 14));
+        assert_eq!(c.rho_trials, 4);
+        // uses strict primality config
+        assert_eq!(c.primality_config.sprp_trials, 1);
+        assert_eq!(c.primality_config.sprp_random_trials, 1);
+        assert!(c.primality_config.slprp_test);
+    }
+
+    // --- ExactRoots helper methods ---
+    #[test]
+    fn exact_roots_is_square() {
+        assert!(16u64.is_square());
+        assert!(!15u64.is_square());
+        assert!(1u64.is_square());
+        assert!(100u64.is_square());
+        assert!(!99u64.is_square());
+    }
+
+    #[test]
+    fn exact_roots_is_cubic() {
+        assert!(27u64.is_cubic());
+        assert!(!26u64.is_cubic());
+        assert!(1u64.is_cubic());
+        assert!(64u64.is_cubic());
+    }
+
+    #[test]
+    fn exact_roots_is_nth_power() {
+        assert!(256u64.is_nth_power(4));
+        assert!(!255u64.is_nth_power(4));
+    }
+
+    #[test]
+    fn exact_roots_sqrt_exact() {
+        assert_eq!(49u64.sqrt_exact(), Some(7));
+        assert_eq!(50u64.sqrt_exact(), None);
+    }
+
+    #[test]
+    fn exact_roots_cbrt_exact() {
+        assert_eq!(125u64.cbrt_exact(), Some(5));
+        assert_eq!(126u64.cbrt_exact(), None);
+    }
+}

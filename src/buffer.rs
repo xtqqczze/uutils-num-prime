@@ -679,4 +679,129 @@ mod tests {
             assert!(fac.len() == 2 && r.is_none());
         }
     }
+
+    // --- NaiveBuffer::clear() + re-reserve ---
+    #[test]
+    fn test_clear_and_re_reserve() {
+        let mut pb = NaiveBuffer::new();
+        pb.reserve(100);
+        assert!(pb.bound() >= 100);
+        assert!(pb.contains(97));
+        pb.clear();
+        // After clear, only 16 primes remain (up to 53)
+        assert_eq!(pb.bound(), 53);
+        assert!(!pb.contains(97)); // 97 should be gone
+                                   // Re-reserve brings primes back
+        pb.reserve(100);
+        assert!(pb.bound() >= 100);
+        assert!(pb.contains(97));
+    }
+
+    // --- into_primes() ---
+    #[test]
+    fn test_into_primes() {
+        let pb = NaiveBuffer::new();
+        let primes: Vec<u64> = pb.into_primes(20).collect();
+        assert_eq!(primes, vec![2, 3, 5, 7, 11, 13, 17, 19]);
+    }
+
+    #[test]
+    fn test_into_primes_exact_boundary() {
+        let pb = NaiveBuffer::new();
+        // 23 is a prime, should be included
+        let primes: Vec<u64> = pb.into_primes(23).collect();
+        assert_eq!(*primes.last().unwrap(), 23);
+    }
+
+    // --- into_nprimes() ---
+    #[test]
+    fn test_into_nprimes() {
+        let pb = NaiveBuffer::new();
+        let primes: Vec<u64> = pb.into_nprimes(10).collect();
+        assert_eq!(primes.len(), 10);
+        assert_eq!(primes[0], 2);
+        assert_eq!(primes[9], 29);
+    }
+
+    // --- primorial() ---
+    #[test]
+    fn test_primorial() {
+        let mut pb = NaiveBuffer::new();
+        // primorial(4) = 2 * 3 * 5 * 7 = 210
+        let result: u64 = pb.primorial(4);
+        assert_eq!(result, 210);
+        // primorial(1) = 2
+        let result: u64 = pb.primorial(1);
+        assert_eq!(result, 2);
+    }
+
+    // --- is_prime with eslprp config ---
+    #[test]
+    fn test_is_prime_eslprp_config() {
+        let pb = NaiveBuffer::new();
+        let config = PrimalityTestConfig {
+            sprp_trials: 1,
+            sprp_random_trials: 0,
+            slprp_test: false,
+            eslprp_test: true,
+        };
+        let p: u128 = 18_699_199_384_836_356_663;
+        assert!(pb.is_prime(&p, Some(config)).probably());
+    }
+
+    // --- is_prime with strict config ---
+    #[test]
+    fn test_is_prime_strict_config() {
+        let pb = NaiveBuffer::new();
+        let p: u128 = 2_019_922_777_445_599_503_530_083;
+        assert!(pb
+            .is_prime(&p, Some(PrimalityTestConfig::strict()))
+            .probably());
+
+        // composite should fail
+        let c: u128 = 2_019_922_777_445_599_503_530_083 * 3;
+        assert!(!pb
+            .is_prime(&c, Some(PrimalityTestConfig::strict()))
+            .probably());
+    }
+
+    // --- factors() for u128 composites ---
+    #[test]
+    fn test_factors_u128() {
+        let pb = NaiveBuffer::new();
+        // Factor a u128 composite: 2^3 * 3^2 * 5 = 360
+        let (factors, remainder) = pb.factors(360u128, None);
+        assert!(remainder.is_none());
+        assert_eq!(factors[&2], 3);
+        assert_eq!(factors[&3], 2);
+        assert_eq!(factors[&5], 1);
+    }
+
+    #[test]
+    fn test_factors_u128_large() {
+        let pb = NaiveBuffer::new();
+        // 2^64 + 1 = 274177 * 67280421310721
+        let n: u128 = (1u128 << 64) + 1;
+        let (factors, remainder) = pb.factors(n, None);
+        assert!(remainder.is_none());
+        assert!(factors.contains_key(&274177u128));
+    }
+
+    // --- is_prime on even numbers ---
+    #[test]
+    fn test_is_prime_even() {
+        let pb = NaiveBuffer::new();
+        assert_eq!(pb.is_prime(&2u128, None), Primality::Yes);
+        assert_eq!(pb.is_prime(&4u128, None), Primality::No);
+    }
+
+    // --- factors with strict config ---
+    #[test]
+    fn test_factors_with_strict_config() {
+        let pb = NaiveBuffer::new();
+        let (factors, remainder) = pb.factors(100u64, Some(FactorizationConfig::strict()));
+        assert!(remainder.is_none());
+        assert_eq!(factors[&2], 2);
+        assert_eq!(factors[&5], 2);
+    }
 }

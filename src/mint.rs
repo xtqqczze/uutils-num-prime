@@ -671,6 +671,7 @@ impl<T: Integer + Clone, R: Reducer<T> + Clone> ModularPow<&Self, &Self> for Min
 pub type SmallMint<T> = Mint<T, Montgomery<T>>;
 
 #[cfg(test)]
+#[allow(clippy::op_ref)]
 mod tests {
     use super::*;
 
@@ -679,5 +680,532 @@ mod tests {
         let a: SmallMint<u32> = 19.into();
         let b: SmallMint<u32> = 8.into();
         assert_eq!(a + b, 27.into());
+    }
+
+    // --- Sub, Mul, Div, Rem operators ---
+    #[test]
+    fn test_sub() {
+        let a: SmallMint<u32> = 19.into();
+        let b: SmallMint<u32> = 8.into();
+        assert_eq!(a - b, SmallMint::from(11u32));
+        // ref variants
+        let a: SmallMint<u32> = 19.into();
+        let b: SmallMint<u32> = 8.into();
+        assert_eq!(&a - &b, SmallMint::from(11u32));
+        assert_eq!(&a - b, SmallMint::from(11u32));
+        let b2: SmallMint<u32> = 8.into();
+        assert_eq!(a - &b2, SmallMint::from(11u32));
+    }
+
+    #[test]
+    fn test_mul() {
+        let a: SmallMint<u32> = 7.into();
+        let b: SmallMint<u32> = 6.into();
+        assert_eq!(a * b, SmallMint::from(42u32));
+        let a: SmallMint<u32> = 7.into();
+        let b: SmallMint<u32> = 6.into();
+        assert_eq!(&a * &b, SmallMint::from(42u32));
+    }
+
+    #[test]
+    fn test_div() {
+        let a: SmallMint<u32> = 42.into();
+        let b: SmallMint<u32> = 7.into();
+        assert_eq!(a / b, SmallMint::from(6u32));
+        // ref variants
+        let a: SmallMint<u32> = 42.into();
+        let b: SmallMint<u32> = 7.into();
+        assert_eq!(&a / &b, SmallMint::from(6u32));
+        assert_eq!(&a / b, SmallMint::from(6u32));
+        let b2: SmallMint<u32> = 7.into();
+        assert_eq!(a / &b2, SmallMint::from(6u32));
+    }
+
+    #[test]
+    fn test_rem_creates_right_variant() {
+        let a: SmallMint<u32> = 19.into();
+        let m: SmallMint<u32> = 7.into();
+        let r = a % m; // creates Right variant (ReducedInt)
+        assert_eq!(r.value(), 5);
+        // ref variants
+        let a: SmallMint<u32> = 19.into();
+        let m: SmallMint<u32> = 7.into();
+        assert_eq!((&a % &m).value(), 5);
+        assert_eq!((&a % m).value(), 5);
+        let m2: SmallMint<u32> = 7.into();
+        assert_eq!((a % &m2).value(), 5);
+    }
+
+    // --- Zero / One ---
+    #[test]
+    fn test_zero_one() {
+        let z: SmallMint<u32> = Zero::zero();
+        assert!(z.is_zero());
+        assert!(!SmallMint::from(1u32).is_zero());
+
+        let o: SmallMint<u32> = One::one();
+        assert!(o.is_one());
+        assert!(!SmallMint::from(2u32).is_one());
+    }
+
+    // --- Num::from_str_radix ---
+    #[test]
+    fn test_from_str_radix() {
+        let v: SmallMint<u32> = Num::from_str_radix("ff", 16).unwrap();
+        assert_eq!(v, SmallMint::from(255u32));
+        let v: SmallMint<u32> = Num::from_str_radix("42", 10).unwrap();
+        assert_eq!(v, SmallMint::from(42u32));
+    }
+
+    // --- Integer methods ---
+    #[test]
+    fn test_integer_methods() {
+        let a: SmallMint<u32> = 17.into();
+        let b: SmallMint<u32> = 5.into();
+
+        assert_eq!(a.div_floor(&b), SmallMint::from(3u32));
+        assert_eq!(a.mod_floor(&b), SmallMint::from(2u32));
+        assert_eq!(a.gcd(&b), SmallMint::from(1u32));
+        assert_eq!(a.lcm(&b), SmallMint::from(85u32));
+
+        let (q, r) = a.div_rem(&b);
+        assert_eq!(q, SmallMint::from(3u32));
+        assert_eq!(r, SmallMint::from(2u32));
+
+        assert!(!SmallMint::from(7u32).is_even());
+        assert!(SmallMint::from(8u32).is_even());
+        assert!(SmallMint::from(7u32).is_odd());
+        assert!(!SmallMint::from(8u32).is_odd());
+
+        assert!(SmallMint::from(15u32).is_multiple_of(&SmallMint::from(5u32)));
+        assert!(!SmallMint::from(14u32).is_multiple_of(&SmallMint::from(5u32)));
+    }
+
+    // --- Ord / PartialOrd ---
+    #[test]
+    fn test_ord() {
+        let a: SmallMint<u32> = 10.into();
+        let b: SmallMint<u32> = 20.into();
+        assert!(a < b);
+        assert!(b > a);
+        assert_eq!(a.cmp(&a), std::cmp::Ordering::Equal);
+    }
+
+    #[test]
+    fn test_ord_mixed_variants() {
+        // Left vs Right and Right vs Left
+        let left: SmallMint<u32> = 5.into();
+        let val: SmallMint<u32> = 12.into();
+        let modulus: SmallMint<u32> = 7.into();
+        let right = val % modulus; // Right variant, residue = 5
+        assert_eq!(left.cmp(&right), std::cmp::Ordering::Equal);
+        assert_eq!(right.cmp(&left), std::cmp::Ordering::Equal);
+    }
+
+    // --- FromPrimitive ---
+    #[test]
+    fn test_from_primitive() {
+        let v: SmallMint<u64> = FromPrimitive::from_u64(42).unwrap();
+        assert_eq!(v, SmallMint::from(42u64));
+
+        let v: SmallMint<u64> = FromPrimitive::from_i64(42).unwrap();
+        assert_eq!(v, SmallMint::from(42u64));
+
+        let v: SmallMint<u64> = FromPrimitive::from_f64(42.0).unwrap();
+        assert_eq!(v, SmallMint::from(42u64));
+    }
+
+    // --- ToPrimitive ---
+    #[test]
+    fn test_to_primitive_left() {
+        let v: SmallMint<u64> = 42.into();
+        assert_eq!(v.to_u64(), Some(42));
+        assert_eq!(v.to_i64(), Some(42));
+        assert_eq!(v.to_f64(), Some(42.0));
+    }
+
+    #[test]
+    fn test_to_primitive_right() {
+        // Right variant (after modular reduction)
+        let v: SmallMint<u64> = 19.into();
+        let m: SmallMint<u64> = 7.into();
+        let r = v % m; // Right variant, residue = 5
+        assert_eq!(r.to_u64(), Some(5));
+        assert_eq!(r.to_i64(), Some(5));
+        assert_eq!(r.to_f64(), Some(5.0));
+    }
+
+    // --- Pow ---
+    #[test]
+    fn test_pow() {
+        let v: SmallMint<u64> = 3.into();
+        let result: SmallMint<u64> = Pow::pow(v, 4u32);
+        assert_eq!(result, SmallMint::from(81u64));
+    }
+
+    // --- BitTest ---
+    #[test]
+    fn test_bittest() {
+        let v: SmallMint<u64> = 0b1010u64.into();
+        assert!(v.bit(1));
+        assert!(!v.bit(0));
+        assert!(v.bit(3));
+        assert_eq!(v.bits(), 4);
+        assert_eq!(v.trailing_zeros(), 1);
+    }
+
+    // --- Shr ---
+    #[test]
+    fn test_shr() {
+        let v: SmallMint<u64> = 16.into();
+        assert_eq!(v >> 2, SmallMint::from(4u64));
+        // ref variant
+        let v: SmallMint<u64> = 16.into();
+        assert_eq!(&v >> 2, SmallMint::from(4u64));
+    }
+
+    // --- Roots ---
+    #[test]
+    fn test_nth_root() {
+        let v: SmallMint<u64> = 27.into();
+        assert_eq!(v.nth_root(3), SmallMint::from(3u64));
+    }
+
+    // --- ExactRoots ---
+    #[test]
+    fn test_nth_root_exact() {
+        let v: SmallMint<u64> = 49.into();
+        assert_eq!(v.nth_root_exact(2).map(|v| v.value()), Some(7));
+        let v: SmallMint<u64> = 50.into();
+        assert!(v.nth_root_exact(2).is_none());
+    }
+
+    // --- value() on Left and Right variants ---
+    #[test]
+    fn test_value_left() {
+        let v: SmallMint<u32> = 42.into();
+        assert_eq!(v.value(), 42);
+    }
+
+    #[test]
+    fn test_value_right() {
+        let v: SmallMint<u32> = 19.into();
+        let m: SmallMint<u32> = 7.into();
+        let r = v % m;
+        assert_eq!(r.value(), 5);
+    }
+
+    // --- Modular ops (addm, subm, mulm, negm, dblm, sqm, powm) ---
+    #[test]
+    fn test_modular_addm() {
+        use num_modular::ModularCoreOps;
+        let m: SmallMint<u32> = 7.into();
+        let a = SmallMint::from(5u32) % &m;
+        let b = SmallMint::from(4u32) % &m;
+        let result = a.addm(&b, &m);
+        assert_eq!(result.value(), 2); // (5+4) % 7 = 2
+    }
+
+    #[test]
+    fn test_modular_addm_ref() {
+        use num_modular::ModularCoreOps;
+        let m: SmallMint<u32> = 7.into();
+        let a = SmallMint::from(5u32) % &m;
+        let b = SmallMint::from(4u32) % &m;
+        let result = (&a).addm(&b, &m);
+        assert_eq!(result.value(), 2);
+    }
+
+    #[test]
+    fn test_modular_subm() {
+        use num_modular::ModularCoreOps;
+        let m: SmallMint<u32> = 7.into();
+        let a = SmallMint::from(3u32) % &m;
+        let b = SmallMint::from(5u32) % &m;
+        let result = a.subm(&b, &m);
+        assert_eq!(result.value(), 5); // (3-5) % 7 = 5
+    }
+
+    #[test]
+    fn test_modular_subm_ref() {
+        use num_modular::ModularCoreOps;
+        let m: SmallMint<u32> = 7.into();
+        let a = SmallMint::from(3u32) % &m;
+        let b = SmallMint::from(5u32) % &m;
+        let result = (&a).subm(&b, &m);
+        assert_eq!(result.value(), 5);
+    }
+
+    #[test]
+    fn test_modular_mulm() {
+        use num_modular::ModularCoreOps;
+        let m: SmallMint<u32> = 7.into();
+        let a = SmallMint::from(5u32) % &m;
+        let b = SmallMint::from(4u32) % &m;
+        let result = a.mulm(&b, &m);
+        assert_eq!(result.value(), 6); // (5*4) % 7 = 20 % 7 = 6
+    }
+
+    #[test]
+    fn test_modular_mulm_ref() {
+        use num_modular::ModularCoreOps;
+        let m: SmallMint<u32> = 7.into();
+        let a = SmallMint::from(5u32) % &m;
+        let b = SmallMint::from(4u32) % &m;
+        let result = (&a).mulm(&b, &m);
+        assert_eq!(result.value(), 6);
+    }
+
+    #[test]
+    fn test_modular_negm() {
+        use num_modular::ModularUnaryOps;
+        let m: SmallMint<u32> = 7.into();
+        // From Left variant
+        let a: SmallMint<u32> = 3.into();
+        let result = a.negm(&m);
+        assert_eq!(result.value(), 4); // -3 % 7 = 4
+                                       // From Right variant
+        let m: SmallMint<u32> = 7.into();
+        let a = SmallMint::from(3u32) % &m;
+        let result = a.negm(&m);
+        assert_eq!(result.value(), 4);
+    }
+
+    #[test]
+    fn test_modular_negm_ref() {
+        use num_modular::ModularUnaryOps;
+        let m: SmallMint<u32> = 7.into();
+        let a: SmallMint<u32> = 3.into();
+        let result = (&a).negm(&m);
+        assert_eq!(result.value(), 4);
+        // Right variant ref
+        let a = SmallMint::from(3u32) % &m;
+        let result = (&a).negm(&m);
+        assert_eq!(result.value(), 4);
+    }
+
+    #[test]
+    fn test_modular_dblm() {
+        use num_modular::ModularUnaryOps;
+        let m: SmallMint<u32> = 7.into();
+        let a: SmallMint<u32> = 5.into();
+        let result = a.dblm(&m);
+        assert_eq!(result.value(), 3); // (5*2) % 7 = 3
+                                       // Right variant
+        let m: SmallMint<u32> = 7.into();
+        let a = SmallMint::from(5u32) % &m;
+        let result = a.dblm(&m);
+        assert_eq!(result.value(), 3);
+    }
+
+    #[test]
+    fn test_modular_dblm_ref() {
+        use num_modular::ModularUnaryOps;
+        let m: SmallMint<u32> = 7.into();
+        let a: SmallMint<u32> = 5.into();
+        let result = (&a).dblm(&m);
+        assert_eq!(result.value(), 3);
+        let a = SmallMint::from(5u32) % &m;
+        let result = (&a).dblm(&m);
+        assert_eq!(result.value(), 3);
+    }
+
+    #[test]
+    fn test_modular_sqm() {
+        use num_modular::ModularUnaryOps;
+        let m: SmallMint<u32> = 7.into();
+        let a: SmallMint<u32> = 4.into();
+        let result = a.sqm(&m);
+        assert_eq!(result.value(), 2); // (4^2) % 7 = 16 % 7 = 2
+                                       // Right variant
+        let m: SmallMint<u32> = 7.into();
+        let a = SmallMint::from(4u32) % &m;
+        let result = a.sqm(&m);
+        assert_eq!(result.value(), 2);
+    }
+
+    #[test]
+    fn test_modular_sqm_ref() {
+        use num_modular::ModularUnaryOps;
+        let m: SmallMint<u32> = 7.into();
+        let a: SmallMint<u32> = 4.into();
+        let result = (&a).sqm(&m);
+        assert_eq!(result.value(), 2);
+        let a = SmallMint::from(4u32) % &m;
+        let result = (&a).sqm(&m);
+        assert_eq!(result.value(), 2);
+    }
+
+    #[test]
+    fn test_modular_powm() {
+        use num_modular::ModularPow;
+        let m: SmallMint<u32> = 7.into();
+        // Left variant
+        let base: SmallMint<u32> = 3.into();
+        let exp: SmallMint<u32> = 4.into();
+        let result = base.powm(&exp, &m);
+        assert_eq!(result.value(), 4); // 3^4 % 7 = 81 % 7 = 4
+                                       // Right variant
+        let base = SmallMint::from(3u32) % &m;
+        let result = base.powm(&exp, &m);
+        assert_eq!(result.value(), 4);
+    }
+
+    // --- ModularSymbols (jacobi, kronecker) ---
+    #[test]
+    fn test_jacobi() {
+        use num_modular::ModularSymbols;
+        let a: SmallMint<u64> = 2.into();
+        let n: SmallMint<u64> = 7.into();
+        assert_eq!(a.checked_jacobi(&n), Some(1)); // 2 is QR mod 7
+        let a: SmallMint<u64> = 3.into();
+        assert_eq!(a.checked_jacobi(&n), Some(-1)); // 3 is QNR mod 7
+    }
+
+    #[test]
+    fn test_jacobi_right_variant() {
+        use num_modular::ModularSymbols;
+        let n: SmallMint<u64> = 7.into();
+        let a = SmallMint::from(2u64) % &n; // Right variant
+        assert_eq!(a.checked_jacobi(&n), Some(1));
+    }
+
+    #[test]
+    fn test_kronecker() {
+        use num_modular::ModularSymbols;
+        let a: SmallMint<u64> = 2.into();
+        let n: SmallMint<u64> = 7.into();
+        assert_eq!(a.kronecker(&n), 1);
+    }
+
+    #[test]
+    fn test_kronecker_right_variant() {
+        use num_modular::ModularSymbols;
+        let n: SmallMint<u64> = 7.into();
+        let a = SmallMint::from(2u64) % &n;
+        assert_eq!(a.kronecker(&n), 1);
+    }
+
+    #[test]
+    fn test_legendre() {
+        use num_modular::ModularSymbols;
+        let a: SmallMint<u64> = 2.into();
+        let n: SmallMint<u64> = 7.into();
+        assert_eq!(a.checked_legendre(&n), Some(1));
+    }
+
+    #[test]
+    fn test_legendre_right_variant() {
+        use num_modular::ModularSymbols;
+        let n: SmallMint<u64> = 7.into();
+        let a = SmallMint::from(3u64) % &n;
+        assert_eq!(a.checked_legendre(&n), Some(-1));
+    }
+
+    // --- is_zero on Right variant ---
+    #[test]
+    fn test_is_zero_right_variant() {
+        let m: SmallMint<u32> = 7.into();
+        let a = SmallMint::from(7u32) % &m;
+        assert!(a.is_zero());
+        let b = SmallMint::from(3u32) % &m;
+        assert!(!b.is_zero());
+    }
+
+    // --- is_one on Right variant ---
+    #[test]
+    fn test_is_one_right_variant() {
+        let m: SmallMint<u32> = 7.into();
+        let a = SmallMint::from(8u32) % &m;
+        assert!(a.is_one());
+    }
+
+    // --- is_even/is_odd on Right variant ---
+    #[test]
+    fn test_even_odd_right_variant() {
+        let m: SmallMint<u32> = 7.into();
+        let a = SmallMint::from(9u32) % &m; // residue 2
+        assert!(a.is_even());
+        assert!(!a.is_odd());
+    }
+
+    // --- Add/Sub/Mul with Right variants ---
+    #[test]
+    fn test_add_right_right() {
+        let m: SmallMint<u32> = 7.into();
+        let a = SmallMint::from(3u32) % &m;
+        let b = SmallMint::from(5u32) % &m;
+        let result = a + b;
+        assert_eq!(result.value(), 1); // (3+5) % 7 = 1
+    }
+
+    #[test]
+    fn test_add_left_right() {
+        let m: SmallMint<u32> = 7.into();
+        let a: SmallMint<u32> = 3.into();
+        let b = SmallMint::from(5u32) % &m;
+        let result = a + b;
+        assert_eq!(result.value(), 1);
+    }
+
+    #[test]
+    fn test_add_right_left() {
+        let m: SmallMint<u32> = 7.into();
+        let a = SmallMint::from(3u32) % &m;
+        let b: SmallMint<u32> = 5.into();
+        let result = a + b;
+        assert_eq!(result.value(), 1);
+    }
+
+    #[test]
+    fn test_sub_right_right() {
+        let m: SmallMint<u32> = 7.into();
+        let a = SmallMint::from(5u32) % &m;
+        let b = SmallMint::from(3u32) % &m;
+        let result = a - b;
+        assert_eq!(result.value(), 2);
+    }
+
+    #[test]
+    fn test_mul_right_right() {
+        let m: SmallMint<u32> = 7.into();
+        let a = SmallMint::from(3u32) % &m;
+        let b = SmallMint::from(4u32) % &m;
+        let result = a * b;
+        assert_eq!(result.value(), 5); // (3*4) % 7 = 12 % 7 = 5
+    }
+
+    // --- gcd with Right variants ---
+    #[test]
+    fn test_gcd_right_left() {
+        let m: SmallMint<u32> = 7.into();
+        let a = SmallMint::from(6u32) % &m; // Right, residue=6
+        let b: SmallMint<u32> = 3.into();
+        assert_eq!(a.gcd(&b), SmallMint::from(3u32));
+    }
+
+    #[test]
+    fn test_gcd_left_right() {
+        let m: SmallMint<u32> = 7.into();
+        let a: SmallMint<u32> = 6.into();
+        let b = SmallMint::from(9u32) % &m; // Right, residue=2
+        assert_eq!(a.gcd(&b), SmallMint::from(2u32));
+    }
+
+    #[test]
+    fn test_gcd_right_right() {
+        let m: SmallMint<u32> = 7.into();
+        let a = SmallMint::from(6u32) % &m;
+        let b = SmallMint::from(9u32) % &m; // residue=2
+        assert_eq!(a.gcd(&b), SmallMint::from(2u32));
+    }
+
+    // --- Rem where Right already matches modulus ---
+    #[test]
+    fn test_rem_right_left_same_modulus() {
+        let m: SmallMint<u32> = 7.into();
+        let a = SmallMint::from(19u32) % &m; // Right variant
+        let result = a % m; // Right % Left with matching modulus
+        assert_eq!(result.value(), 5);
     }
 }
