@@ -17860,9 +17860,9 @@ for s in selections:
 ```
 */
 
-#[cfg(not(feature = "big-table"))]
+#[cfg(all(not(feature = "big-table"), feature = "num-bigint"))]
 pub const QUAD_MODULI: [u8; 4] = [63, 65, 61, 59]; // note that 0 and 64 are both square mod 65
-#[cfg(not(feature = "big-table"))]
+#[cfg(all(not(feature = "big-table"), feature = "num-bigint"))]
 pub const QUAD_RESIDUAL: [u64; 4] = [
     0x0402483012450293,
     0x218a019866014613,
@@ -17870,9 +17870,9 @@ pub const QUAD_RESIDUAL: [u64; 4] = [
     0x022b62183e7b92bb,
 ];
 
-#[cfg(not(feature = "big-table"))]
+#[cfg(all(not(feature = "big-table"), feature = "num-bigint"))]
 pub const CUBIC_MODULI: [u8; 4] = [63, 61, 43, 37];
-#[cfg(not(feature = "big-table"))]
+#[cfg(all(not(feature = "big-table"), feature = "num-bigint"))]
 pub const CUBIC_RESIDUAL: [u64; 4] = [
     0x4080001818000103,
     0x1434026619900b0b,

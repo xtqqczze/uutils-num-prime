@@ -23,6 +23,7 @@ use crate::tables::{SMALL_PRIMES_INV, ZETA_LOG_TABLE};
 use crate::traits::{FactorizationConfig, Primality, PrimalityTestConfig, PrimalityUtils};
 use crate::{BitTest, ExactRoots};
 use num_integer::Roots;
+#[cfg(feature = "big-table")]
 use num_modular::DivExact;
 use num_modular::{ModularCoreOps, ModularInteger, MontgomeryInt};
 use num_traits::{CheckedAdd, FromPrimitive, Num, RefNum, ToPrimitive};
@@ -1186,6 +1187,8 @@ mod tests {
             1523, 1619, 1823, 1907,
         ];
         for p in SMALL_PRIMES {
+            #[allow(clippy::unnecessary_cast)]
+            let p = p as u16;
             if p > 1500 {
                 break;
             }
