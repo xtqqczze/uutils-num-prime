@@ -406,4 +406,126 @@ mod tests {
     fn one_line_test() {
         assert_eq!(one_line(&11111u32, 11111u32, 100).0, Some(271));
     }
+
+    // --- one_line with overflow via checked_add ---
+    #[test]
+    fn one_line_overflow() {
+        // Use a u64 target large enough that repeated addition overflows
+        let n = u64::MAX / 4 + 1; // ~4.6e18, adding 5 times overflows u64
+        let result = one_line(&n, n, 1000);
+        // Should return None (overflow triggered early exit via checked_add)
+        assert!(result.0.is_none());
+    }
+
+    #[test]
+    fn one_line_with_multiplier() {
+        // Use multiplier 480 as recommended
+        let n = 11111u32;
+        let result = one_line(&n, n * 480, 100);
+        assert!(result.0.is_some());
+        let f = result.0.unwrap();
+        assert!(n.is_multiple_of(f) && f > 1 && f < n);
+    }
+
+    // --- trial_division with limit=None (no limit path) ---
+    #[test]
+    fn trial_division_no_limit() {
+        let primes: Vec<u64> = vec![2, 3, 5, 7, 11, 13];
+        let (factors, residual) = trial_division(primes.into_iter(), 2 * 3 * 5 * 7u64, None);
+        assert!(residual.is_ok());
+        assert_eq!(residual.unwrap(), 1);
+        assert_eq!(factors[&2], 1);
+        assert_eq!(factors[&3], 1);
+        assert_eq!(factors[&5], 1);
+        assert_eq!(factors[&7], 1);
+    }
+
+    // --- trial_division where residual is 1 (fully factored) ---
+    #[test]
+    fn trial_division_residual_one() {
+        let primes: Vec<u64> = vec![2, 3, 5];
+        let (factors, residual) = trial_division(primes.into_iter(), 60u64, Some(100));
+        assert!(residual.is_ok());
+        assert_eq!(residual.unwrap(), 1);
+        assert_eq!(factors[&2], 2);
+        assert_eq!(factors[&3], 1);
+        assert_eq!(factors[&5], 1);
+    }
+
+    // --- trial_division where bound exceeds sqrt (factored=true with residual prime) ---
+    #[test]
+    fn trial_division_bound_exceeds_sqrt() {
+        // 91 = 7 * 13. Primes up to 13 will factor it, and 13 > sqrt(91) ~ 9.5
+        let primes: Vec<u64> = vec![2, 3, 5, 7, 11, 13];
+        let (factors, residual) = trial_division(primes.into_iter(), 91u64, Some(100));
+        assert!(residual.is_ok());
+        // After dividing by 7, residual is 13, and bound > sqrt means factored
+        assert_eq!(factors[&7], 1);
+        assert_eq!(residual.unwrap(), 13);
+    }
+
+    #[test]
+    fn trial_division_prime_target() {
+        // 97 is prime. Primes up to 10 > sqrt(97) ~ 9.85, so factored=true
+        let primes: Vec<u64> = vec![2, 3, 5, 7, 11];
+        let (factors, residual) = trial_division(primes.into_iter(), 97u64, Some(100));
+        assert!(residual.is_ok());
+        assert!(factors.is_empty());
+        assert_eq!(residual.unwrap(), 97);
+    }
+
+    // --- squfof with perfect square input ---
+    #[test]
+    fn squfof_perfect_square() {
+        // Perfect square: q.is_zero() shortcut
+        let result = squfof(&49u64, 49u64, 100);
+        assert_eq!(result.0, Some(7));
+        assert_eq!(result.1, 0); // should return immediately
+    }
+
+    #[test]
+    fn squfof_perfect_square_large() {
+        let n = 10201u64; // 101^2
+        let result = squfof(&n, n, 100);
+        assert_eq!(result.0, Some(101));
+        assert_eq!(result.1, 0);
+    }
+
+    // --- pollard_rho with known backtracing scenario ---
+    #[test]
+    fn pollard_rho_various_starts() {
+        // Test multiple start/offset combinations to increase path coverage
+        let target = 8051u32;
+        for start in [1u32, 2, 3, 5, 7, 11, 13] {
+            for offset in [1u32, 2, 3, 5, 7] {
+                let (result, _) = pollard_rho(&target, start, offset, 10000);
+                if let Some(f) = result {
+                    assert!(target.is_multiple_of(f) && f > 1 && f < target);
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn pollard_rho_loop_detection() {
+        // Case where a == b (cycle detected) should return None
+        // Start 0, offset 0: f(x) = x^2 + 0 mod n, starting from 0 => always 0, quick cycle
+        let (result, _) = pollard_rho(&15u32, 0, 0, 100);
+        // This should either find a factor or hit the cycle
+        // Just verify it doesn't panic
+        let _ = result;
+    }
+
+    // --- trial_division with small limit ---
+    #[test]
+    fn trial_division_limited() {
+        // Limit smaller than sqrt means not fully factored
+        let primes: Vec<u64> = vec![2, 3, 5, 7, 11, 13];
+        // 1001 = 7 * 11 * 13, sqrt(1001) ~ 31.6
+        // With limit 10, we can only find factor 7, then residual 143 = 11*13
+        let (factors, residual) = trial_division(primes.into_iter(), 1001u64, Some(10));
+        assert!(residual.is_err()); // not fully factored
+        assert_eq!(factors[&7], 1);
+        assert_eq!(residual.unwrap_err(), 143);
+    }
 }
