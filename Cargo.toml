@@ -1,8 +1,12 @@
+[workspace.package]
+edition = "2018"
+rust-version = "1.87"
+
 [package]
 name = "num-prime"
 version = "0.4.4"
-edition = "2018"
-
+edition.workspace = true
+rust-version.workspace = true
 repository = "https://github.com/uutils/num-prime"
 keywords = ["mathematics", "primes", "number-theory", "bigint", "num"]
 categories = ["cryptography", "science", "algorithms"]
