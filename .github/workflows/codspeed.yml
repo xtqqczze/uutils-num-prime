@@ -21,7 +21,10 @@ jobs:
       matrix:
         mode: [simulation] # , memory]
     steps:
-      - uses: actions/checkout@v6
+      - name: Clone repository
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
 
       - name: Setup rust toolchain, cache and cargo-codspeed binary
         uses: moonrepo/setup-rust@v1
